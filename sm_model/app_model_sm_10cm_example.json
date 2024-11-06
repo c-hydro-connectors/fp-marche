@@ -1,0 +1,221 @@
+{
+  "algorithm": {
+    "general": {
+      "title": "Running tool of soil moisture model",
+      "web-site": "",
+      "source": "Python library developed by CIMA Research Foundation",
+      "history": "1.0.0 [20241018]",
+      "project-info": "cf-marche",
+      "algorithm": "Algorithm developed by CNR-IRPI"
+    },
+    "flags": {
+      "reset_data_static": true,
+      "reset_data_dynamic": true,
+      "reset_model_results": true,
+      "reset_model_metrics": true,
+      "reset_model_figure": true
+    },
+    "info": {
+      "domain_name": "marche"
+    },
+    "template": {
+      "datasets": {
+        "point_name": "string_point_name",
+        "variable_name": "string_variable_name"
+      },
+      "time" : {
+        "source_data_sub_path_time_k1": "%Y/%m/",
+        "source_data_datetime_k1": "%Y%m",
+        "source_data_sub_path_time_k2": "%Y/%m/",
+        "source_data_datetime_k2": "%Y%m",
+        "source_data_sub_path_time_k3": "%Y/%m/",
+        "source_data_datetime_k3": "%Y%m",
+        "destination_data_sub_path_time": "%Y/%m/%d/",
+        "destination_data_datetime": "%Y%m%d%H%M",
+        "model_results_sub_path_time": "%Y/%m/%d/",
+        "model_results_datetime": "%Y%m%d%H%M",
+        "model_metrics_sub_path_time": "%Y/%m/%d/",
+        "model_metrics_datetime": "%Y%m%d%H%M",
+        "model_figure_sub_path_time": "%Y/%m/%d/",
+        "model_figure_datetime": "%Y%m%d%H%M"
+      }
+    }
+  },
+  "data": {
+    "static": {
+      "source": {
+        "registry": {
+          "folder_name": "/home/fabio/Desktop/Connectors_Package/connectors-ws/marche/data_static/sm_model/",
+          "file_name": "sm_model_registry_ws.csv",
+          "format": "csv",
+          "filters": {"depth": 10},
+          "fields": {
+            "code": "code",
+            "longitude": "longitude",
+            "latitude": "latitude",
+            "altitude": "altitude",
+            "catchment": "catchment",
+            "name": "name",
+            "units": "units",
+            "depth": "depth",
+            "porosity": "porosity",
+            "valid": "valid",
+            "tag": "tag",
+            "amm_level_1": "amm_level_1",
+            "amm_level_2": "amm_level_2"
+          }
+        },
+        "parameters": {
+          "folder_name": "/home/fabio/Desktop/Connectors_Package/connectors-ws/marche/data_static/sm_model/",
+          "file_name": "Xopt.txt",
+          "format": "ascii"
+        }
+      },
+      "destination": {
+        "folder_name": "/home/fabio/Desktop/Connectors_Package/connectors-ws/marche/data_static/sm_model/",
+        "file_name": "sm_model_10cm_info.workspace"
+      }
+    },
+    "dynamic": {
+      "source": {
+        "rain": {
+          "folder_name": "/home/fabio/Desktop/Connectors_Package/connectors-ws/marche/data_dynamic/obs/time_series/rain/db/{source_data_sub_path_time_k1}",
+          "file_name": "rain_ts_obs_{source_data_datetime_k1}_{point_name}_db.csv",
+          "format": "csv",
+          "delimiter": ";",
+          "filters": {},
+          "time": {
+            "time_start": null,
+            "time_end": null,
+            "time_frequency": "H",
+            "time_rounding": "H",
+            "time_format": "%Y-%m-%d %H:%M:%S"
+          },
+          "fields": {
+            "time": "time",
+            "values_k1": "data"
+          }
+        },
+        "air_temperature": {
+          "folder_name": "/home/fabio/Desktop/Connectors_Package/connectors-ws/marche/data_dynamic/obs/time_series/air_temperature/db/{source_data_sub_path_time_k2}",
+          "file_name": "air_temperature_ts_obs_{source_data_datetime_k2}_{point_name}_db.csv",
+          "format": "csv",
+          "delimiter": ";",
+          "filters": {},
+          "time": {
+            "time_start": null,
+            "time_end": null,
+            "time_frequency": "H",
+            "time_rounding": "H",
+            "time_format": "%Y-%m-%d %H:%M:%S"
+          },
+          "fields": {
+            "time": "time",
+            "values_k2": "data"
+          }
+        },
+        "soil_moisture": {
+          "folder_name": "/home/fabio/Desktop/Connectors_Package/connectors-ws/marche/data_dynamic/obs/time_series/soil_moisture/db/{source_data_sub_path_time_k3}",
+          "file_name": "soil_moisture_ts_obs10cm_{source_data_datetime_k3}_{point_name}_db.csv",
+          "format": "csv",
+          "delimiter": ";",
+          "filters": {},
+          "time": {
+            "time_start": null,
+            "time_end": null,
+            "time_frequency": "H",
+            "time_rounding": "H",
+            "time_format": "%Y-%m-%d %H:%M:%S"
+          },
+          "fields": {
+            "time": "time",
+            "values_k3": "data"
+          }
+        }
+      },
+      "destination": {
+        "folder_name": "/home/fabio/Desktop/Connectors_Package/connectors-ws/marche/sm_model/data/{destination_data_sub_path_time}",
+        "file_name": "soil_moisture_ts_mod10cm_{destination_data_datetime}_{point_name}_db.csv",
+        "format": "csv",
+        "filters": {},
+        "time": {
+          "time_start": null,
+          "time_end": null,
+          "time_frequency": "H",
+          "time_rounding": "H",
+          "time_format": "%Y-%m-%d %H:%M:%S"
+        },
+        "fields": {
+          "time": "time",
+          "values_k1": "rain",
+          "values_k2": "air_temperature",
+          "values_k3": "soil_moisture"
+        },
+        "no_data": -9999.0
+      }
+    }
+  },
+  "model": {
+    "results" : {
+      "__comment__": "type: [all_pnt_one_var, one_pnt_all_var]",
+      "folder_name": "/home/fabio/Desktop/Connectors_Package/connectors-ws/marche/sm_model/results/{model_results_sub_path_time}",
+      "file_name": "soil_moisture_ts_mod10cm_{model_results_datetime}_{point_name}_results.csv",
+      "format": "csv",
+      "time": {
+        "time_start": null,
+        "time_end": null,
+        "time_frequency": "H",
+        "time_rounding": "H",
+        "time_format": "%Y-%m-%d %H:%M:%S"
+      },
+      "fields": {
+        "time": "time",
+        "values_k1": "rain",
+        "values_k2": "air_temperature",
+        "values_k3": "theta_observed",
+        "values_model": "theta_simulated"
+      },
+      "no_data": -9999.0
+    },
+    "metrics": {
+      "folder_name": "/home/fabio/Desktop/Connectors_Package/connectors-ws/marche/sm_model/results/{model_metrics_sub_path_time}",
+      "file_name": "soil_moisture_ts_mod10cm_{model_metrics_datetime}_{point_name}_metrics.csv",
+      "format": "csv",
+      "time": {},
+      "fields": {
+        "ns": "ns", "ns_ln_q": "ns_ln_q", "ns_rad_q": "ns_rad_q", "kge": "kge", "rmse": "rmse", "rq": "rq",
+        "time": "time",
+        "name": "name",
+        "tag": "tag",
+        "catchment":"catchment",
+        "longitude":"longitude",
+        "latitude": "latitude"
+      },
+      "no_data": -9999.0
+    },
+    "figure": {
+      "folder_name": "/home/fabio/Desktop/Connectors_Package/connectors-ws/marche/sm_model/figure/{model_figure_sub_path_time}",
+      "file_name": "soil_moisture_ts_mod10cm_{model_figure_datetime}_{point_name}_figure.png",
+      "format": "png",
+      "time": {},
+      "fields": {},
+      "no_data": -9999.0
+    }
+  },
+  "time" : {
+    "time_reference": null,
+    "time_frequency": "H",
+    "time_rounding": "H",
+    "time_period": 12,
+    "time_start": null,
+    "time_end": null
+  },
+  "tmp": {
+    "folder_name": "/home/fabio/Desktop/Connectors_Package/connectors-ws/marche/tmp/",
+    "file_name": null
+  },
+  "log": {
+    "folder_name": "/home/fabio/Desktop/Connectors_Package/connectors-ws/marche/log/",
+    "file_name": "soil_moisture_mod10cm_execution.txt"
+  }
+}
