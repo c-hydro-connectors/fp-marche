@@ -3,8 +3,8 @@
 """
 APP - SM MODEL
 
-__date__ = '20241018'
-__version__ = '1.0.0'
+__date__ = '20241113'
+__version__ = '1.1.0'
 __author__ =
     'Fabio Delogu (fabio.delogu@cimafoundation.org)'
 __library__ = 'sm_model'
@@ -13,6 +13,7 @@ General command line:
 python app_model_sm_main.py -settings_file configuration.json -time "YYYY-MM-DD HH:MM"
 
 Version(s):
+20241113 (1.1.0) --> Update model parameters datasets format and model time-series scaling method; fix bugs
 20241018 (1.0.0) --> Beta release for sm_model package
 """
 
@@ -44,8 +45,8 @@ alg_logger = logging.getLogger(logger_name)
 project_name = ''
 alg_name = 'Application for running SM model'
 alg_type = 'Package'
-alg_version = '1.0.0'
-alg_release = '2024-10-18'
+alg_version = '1.1.0'
+alg_release = '2024-11-13'
 # ----------------------------------------------------------------------------------------------------------------------
 
 

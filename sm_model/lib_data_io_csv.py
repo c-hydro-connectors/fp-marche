@@ -86,6 +86,64 @@ def read_datasets_csv(file_name,
 
 
 # ----------------------------------------------------------------------------------------------------------------------
+# method to read parameters in csv format
+def read_parameters_csv(file_name, file_fields, file_filters=None, file_sep=',', file_decimal='.'):
+
+    # get file fields
+    fields_data_raw = pd.read_table(file_name, sep=file_sep, decimal=file_decimal)
+    fields_data_raw.columns = fields_data_raw.columns.str.strip()
+    # map file fields
+    fields_data_map = map_vars_dframe(fields_data_raw, file_fields)
+
+    # get name fields
+    var_data_name = fields_data_map['name'].values
+    # parser tag
+    if 'tag' not in list(fields_data_map.keys()):
+        var_data_tag = []
+        for string_name in var_data_name:
+            string_tag = sanitize_string(string_name)
+            var_data_tag.append(string_tag)
+
+        fields_data_map['tag'] = var_data_tag
+
+    # create fields dframe
+    fields_dframe = pd.DataFrame(data=fields_data_map)
+
+    if 'valid' in list(fields_dframe.columns):
+        fields_dframe = fields_dframe[fields_dframe['valid'] == 1]
+
+    if 'code' in list(fields_dframe.columns):
+        fields_dframe['code'] = fields_dframe['code'].apply(str)
+    else:
+        log_stream.warning(' ===> Code field is not available in the registry file. Set default values.')
+        rows_dframe = fields_dframe.shape[0]
+        fields_dframe['code'] = [str(i) for i in range(1, rows_dframe + 1)]
+
+    if 'tag' in list(fields_dframe.columns):
+        fields_dframe['tag'] = fields_dframe['tag'].str.strip()
+
+    if file_filters is not None:
+        for filter_key, filter_value in file_filters.items():
+            if filter_key in list(fields_dframe.columns):
+                filter_data = fields_dframe[filter_key].values
+                filter_id_list = []
+                for filter_id_step, filter_row in enumerate(filter_data):
+
+                    if not isinstance(filter_value, str):
+                        filter_value = str(filter_value)
+                    if not isinstance(filter_row, str):
+                        filter_row = str(filter_row)
+
+                    if filter_value in filter_row:
+                        filter_id_list.append(filter_id_step)
+
+                fields_dframe = fields_dframe.loc[filter_id_list]
+
+    return fields_dframe
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+# ----------------------------------------------------------------------------------------------------------------------
 # method to read registry in csv format
 def read_registry_csv(file_name, file_fields, file_filters=None, file_sep=',', file_decimal='.'):
 

@@ -63,12 +63,28 @@
             "tag": "tag",
             "amm_level_1": "amm_level_1",
             "amm_level_2": "amm_level_2"
-          }
+          },
+          "delimiter": ","
         },
         "parameters": {
           "folder_name": "/home/fabio/Desktop/Connectors_Package/connectors-ws/marche/data_static/sm_model/",
-          "file_name": "Xopt.txt",
-          "format": "ascii"
+          "file_name": "parametri_modello.csv",
+          "format": "csv",
+          "filters": {},
+          "fields": {
+            "name": "Nome",
+            "code": "Cod. Stazione",
+            "tag": "Tag",
+            "W_p": "W_p",
+            "W_max": "W_max",
+            "alpha": "alpha",
+            "m2": "m2",
+            "Ks": "Ks",
+            "Kc": "Kc",
+            "Theta_min": "Theta_min",
+            "Theta_max": "Theta_max"
+          },
+          "delimiter": ","
         }
       },
       "destination": {

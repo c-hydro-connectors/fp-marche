@@ -2,7 +2,7 @@
 Changelog
 =========
 
-Version 1.1.0 [2024-11-06]
+Version 1.1.0 [2024-11-15]
 **************************
 ADD: soil moisture model scripts and methods
 

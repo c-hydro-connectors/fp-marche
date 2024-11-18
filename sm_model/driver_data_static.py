@@ -12,12 +12,13 @@ Version:       '1.0.0'
 import logging
 import os
 
-from lib_data_io_ascii import read_parameters_ascii
-from lib_data_io_csv import read_registry_csv
+# from lib_data_io_ascii import read_parameters_ascii
+from lib_data_io_csv import read_registry_csv, read_parameters_csv
 from lib_data_io_pickle import read_obj, write_obj
 
 from lib_utils_io import fill_string_with_time, fill_string_with_info
 from lib_utils_generic import make_folder
+from lib_utils_obj import join_dframe
 
 from lib_info_args import logger_name
 
@@ -52,7 +53,7 @@ class DriverData:
 
         # registry and datasets tag(s)
         self.file_name_tag, self.folder_name_tag = 'file_name', 'folder_name'
-        self.filters_tag = 'filters'
+        self.filters_tag, self.delimiter_tag = 'filters', 'delimiter'
         self.fields_tag, self.format_tag = 'fields', 'format'
 
         # source registry object(s)
@@ -61,12 +62,22 @@ class DriverData:
         self.format_registry = self.alg_datasets_src_registry[self.format_tag]
         self.fields_registry = self.alg_datasets_src_registry[self.fields_tag]
         self.filters_registry = self.alg_datasets_src_registry[self.filters_tag]
+        if self.delimiter_tag in self.alg_datasets_src_registry.keys():
+            self.delimiter_registry = self.alg_datasets_src_registry[self.delimiter_tag]
+        else:
+            self.delimiter_registry = ';'
         self.file_path_src_registry = os.path.join(self.folder_name_src_registry, self.file_name_src_registry)
 
         # source parameters object(s)
         self.folder_name_src_params = self.alg_datasets_src_parameters['folder_name']
         self.file_name_src_params = self.alg_datasets_src_parameters['file_name']
         self.format_params = self.alg_datasets_src_parameters[self.format_tag]
+        self.fields_params = self.alg_datasets_src_parameters[self.fields_tag]
+        self.filters_params = self.alg_datasets_src_parameters[self.filters_tag]
+        if self.delimiter_tag in self.alg_datasets_src_registry.keys():
+            self.delimiter_params = self.alg_datasets_src_parameters[self.delimiter_tag]
+        else:
+            self.delimiter_params = ';'
         self.file_path_src_params = os.path.join(self.folder_name_src_params, self.file_name_src_params)
 
         # destination object(s)
@@ -91,7 +102,8 @@ class DriverData:
         # check file format
         if self.format_registry == 'csv':
             # get registry in csv format
-            fields_obj = read_registry_csv(file_name, file_fields=file_fields, file_filters=file_filters)
+            fields_obj = read_registry_csv(
+                file_name, file_fields=file_fields, file_filters=file_filters, file_sep=self.delimiter_registry)
         else:
             # exit with error if file format is not supported
             log_stream.error(' ===> File format is not supported')
@@ -106,7 +118,7 @@ class DriverData:
 
     # -------------------------------------------------------------------------------------
     # method to get parameters object
-    def get_obj_parameters(self, file_name):
+    def get_obj_parameters(self, file_name, file_fields=None, file_filters=None):
 
         # info start method
         log_stream.info(' -----> Read file parameters "' + file_name + '" ... ')
@@ -118,8 +130,14 @@ class DriverData:
 
         # check file format
         if self.format_params == 'ascii':
-            # get registry in csv format
-            fields_dframe = read_parameters_ascii(file_name)
+            # get params in ascii format
+            # fields_dframe = read_parameters_ascii(file_name)
+            log_stream.error(' ===> File ascii format is not longer supported')
+            raise NotImplemented('Case not longer supported by the library')
+        elif self.format_params == 'csv':
+            # get params in csv format
+            fields_dframe = read_parameters_csv(
+                file_name, file_fields=file_fields, file_filters=file_filters, file_sep=self.delimiter_params)
         else:
             # exit with error if file format is not supported
             log_stream.error(' ===> File format is not supported')
@@ -220,10 +238,13 @@ class DriverData:
                 file_path_src_registry_def, self.fields_registry, self.filters_registry)
             # get parameters obj
             obj_parameters = self.get_obj_parameters(
-                file_path_src_params_def)
+                file_path_src_params_def, self.fields_params, self.filters_params)
+
+            # join registry and parameters obj
+            obj_registry = join_dframe(obj_registry, obj_parameters, column_ref='tag', column_suffix='_tmp')
 
             # organize destination obj
-            obj_collections = {'registry': obj_registry, 'parameters': obj_parameters}
+            obj_collections = {'registry': obj_registry}
 
             # dump destination obj
             self.dump_obj_collections(file_path_dst_def, obj_collections)

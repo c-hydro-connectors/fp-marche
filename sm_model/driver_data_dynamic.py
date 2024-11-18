@@ -40,7 +40,6 @@ class DriverData:
 
         # set data static object(s)
         self.data_registry = alg_data_static['registry']
-        self.data_params = alg_data_static['parameters']
 
         # set algorithm information
         self.alg_flags = alg_flags

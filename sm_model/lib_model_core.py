@@ -47,6 +47,8 @@ def SMestim_IE_03(TIME, PTSM, PAR):
     m2 = PAR[3]
     Ks = PAR[4]
     Kc = PAR[5]
+    theta_min = PAR[6] / 100
+    theta_max = PAR[7] / 100
     Ks = Ks * dt
 
     L = np.array([0.2100, 0.2200, 0.2300, 0.2800, 0.3000, 0.3100,
@@ -57,8 +59,14 @@ def SMestim_IE_03(TIME, PTSM, PAR):
     WW = np.zeros(M)
 
     W = W_p * W_max
+    W_reinit = W_p * W_max
     for t in range(M):
+
+        if np.isfinite(EPOT[t]) and np.isnan(W):
+            W = W_reinit
+
         IE = PIO[t] * ((W / W_max) ** alpha)
+
         E = EPOT[t] * W / W_max
         PERC = Ks * (W / W_max) ** m2
         W = W + (PIO[t] - IE - PERC - E)
@@ -67,7 +75,9 @@ def SMestim_IE_03(TIME, PTSM, PAR):
             W = W_max
         else:
             SE = 0
+
         WW[t] = W / W_max
+        WW[t] = WW[t] * (theta_max - theta_min) + theta_min
 
     valid_mask = ~np.isnan(WW) & ~np.isnan(WWobs)
     WW_valid = WW[valid_mask]

@@ -22,6 +22,7 @@ import matplotlib.pylab as plt
 
 # logging
 log_stream = logging.getLogger(logger_name)
+logging.getLogger('matplotlib').setLevel(logging.WARNING)
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -154,8 +155,26 @@ def organize_model_data(dframe_data, var_tag_rain='values_k1', var_tag_airt='val
 
 # ----------------------------------------------------------------------------------------------------------------------
 # method to organize model parameters
-def organize_model_parameters(params_dict):
-    values_params = np.array(list(params_dict.values()))
+def organize_model_parameters(params_dict, parameters_list=None, parameters_mandatory=True):
+
+    if parameters_list is None:
+        parameters_list = ['w_p', 'w_max', 'alpha', 'm2', 'ks', 'kc', 'theta_min', 'theta_max']
+
+    parameters_values = []
+    for parameters_name in parameters_list:
+
+        if parameters_name in list(params_dict.keys()):
+            parameters_values.append(params_dict[parameters_name])
+        else:
+            if parameters_mandatory:
+                log_stream.error(' ===> Variable "' + parameters_name + '" not included in the parameters dictionary')
+                raise IOError('Check your parameters dictionary')
+            else:
+                log_stream.warning(' ===> Variable "' + parameters_name + '" not included in the parameters dictionary')
+
+    # convert parameters values in array
+    values_params = np.array(parameters_values)
+
     return values_params
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -175,16 +194,40 @@ def configure_time_axes(time_data, time_format='%Y-%m-%d'):
 # ----------------------------------------------------------------------------------------------------------------------
 # method to plot model results
 def plot_model_results(file_name, dframe_results, dframe_metrics,
-                       fig_spacing_x=None, fig_dpi=150, fig_show=True, **kwargs):
+                       fig_spacing_x=None, fig_dpi=150, fig_show=True,
+                       no_data_rain=-9999.0, no_data_air_t=-9999.0,
+                       no_data_theta_obs=-9999.0, no_data_theta_sim=-9999.0,
+                       **kwargs):
 
     # sort data by index (time)
     dframe_results = dframe_results.sort_index()
 
+    # compute expected time period and data frame
+    time_index_start, time_index_end = dframe_results.index[0], dframe_results.index[-1]
+    time_index_resolution = dframe_results.index.resolution
+
+    if time_index_resolution == 'hour':
+        time_index_frequency = 'H'
+    else:
+        log_stream.error(' ===> Time resolution not expected in the dataframe obj')
+        raise NotImplemented('Case not implemented yet')
+    time_index_range = pd.date_range(start=time_index_start, end=time_index_end, freq=time_index_frequency)
+
+    dframe_expected = pd.DataFrame(index=time_index_range)
+    dframe_expected = dframe_expected.join(dframe_results)
+
     # get ts values
-    values_time = dframe_results.index
-    values_rain = dframe_results['rain'].values
-    values_theta_obs = dframe_results['theta_observed'].values
-    values_theta_sim = dframe_results['theta_simulated'].values
+    values_time = dframe_expected.index
+    values_rain = dframe_expected['rain'].values
+    values_air_t = dframe_expected['air_temperature'].values
+    values_theta_obs = dframe_expected['theta_observed'].values
+    values_theta_sim = dframe_expected['theta_simulated'].values
+
+    # nullify no data values
+    values_rain[values_rain == no_data_rain] = np.nan
+    values_air_t[values_air_t == no_data_air_t] = np.nan
+    values_theta_obs[values_theta_obs == no_data_theta_obs] = np.nan
+    values_theta_sim[values_theta_sim == no_data_theta_sim] = np.nan
 
     # get metrics values
     metrics_ns = dframe_metrics['ns'].values[0]
@@ -207,6 +250,8 @@ def plot_model_results(file_name, dframe_results, dframe_metrics,
     y_max_sm = 1.05
     y_min_rain = 0
     y_max_rain = np.nanmax([np.nanmax(values_rain[np.isfinite(values_rain)]), 25])
+    y_min_air_t = np.nanmin([np.nanmin(values_air_t[np.isfinite(values_air_t)]), -25])
+    y_max_air_t = np.nanmax([np.nanmax(values_air_t[np.isfinite(values_air_t)]), 50])
 
     # select time start and time end
     time_start_string, time_start_stamp = values_time[0].strftime('%Y-%m-%d %H:%M'), values_time[0]
@@ -251,8 +296,8 @@ def plot_model_results(file_name, dframe_results, dframe_metrics,
     # upper panel (soil moisture)
     ax1 = plt.axes([0.1, 0.5, 0.8, 0.40])
     ax1.set_title(s, fontsize=10, fontweight='bold')
-    ax1.plot(values_time, values_theta_obs, 'g', linewidth=3, label=r'$\theta_{obs}$')
-    ax1.plot(values_time, values_theta_sim, 'r', linewidth=2, label=r'$\theta_{sim}$')
+    ax1.plot(values_time, values_theta_obs, 'g', linewidth=2, label=r'$\theta_{obs}$')
+    ax1.plot(values_time, values_theta_sim, 'r', linewidth=1, label=r'$\theta_{sim}$')
     ax1.legend()
     ax1.set_ylabel('Relative Soil Moisture [-]')
     ax1.set_xlim([time_period_tick_start, time_period_tick_end])
@@ -262,12 +307,18 @@ def plot_model_results(file_name, dframe_results, dframe_metrics,
 
     # lower panel (rain)
     ax2 = plt.axes([0.1, 0.1, 0.8, 0.40])
-    ax2.plot(values_time, values_rain, color=[.5, .5, .5], linewidth=3)
+    ax2.plot(values_time, values_rain, color=[.5, .5, .5], linewidth=1, label='rain')
     ax2.set_ylabel('Rain (mm/h)')
     ax2.set_ylim([y_min_rain, y_max_rain])
     ax2.set_xlim(time_period_tick_start, time_period_tick_end)
-    ax2.set_xticklabels(ax2.get_xticklabels(), rotation=45, fontsize=6)
+    ax2.tick_params(axis='x', labelrotation=45, labelsize=6)
     ax2.grid(b=True)
+
+    ax3 = ax2.twinx()
+    ax3.plot(values_time, values_air_t, color='r', linewidth=0.2, label='air temperature')
+    ax3.set_ylabel('Air Temperature (C)')
+    ax3.set_ylim(y_min_air_t, y_max_air_t)
+    ax3.set_xlim(time_period_tick_start, time_period_tick_end)
 
     # save figure
     plt.savefig(file_name, format='png', dpi=fig_dpi)

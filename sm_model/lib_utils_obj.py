@@ -22,6 +22,15 @@ log_stream = logging.getLogger(logger_name)
 # ----------------------------------------------------------------------------------------------------------------------
 
 
+# -------------------------------------------------------------------------------------
+# method to join dataframes
+def join_dframe(df_ref, df_other, column_ref='tag', column_suffix='_tmp'):
+    df_ref = df_ref.join(df_other.set_index(column_ref), on=column_ref, rsuffix=column_suffix)
+    df_ref = df_ref[df_ref.columns.drop(list(df_ref.filter(regex=column_suffix)))]
+    return df_ref
+# -------------------------------------------------------------------------------------
+
+
 # ----------------------------------------------------------------------------------------------------------------------
 # method to sanitize string
 def sanitize_string(string_name):

@@ -45,7 +45,6 @@ class DriverModel:
 
         # set data static object(s)
         self.data_registry = alg_data_static['registry']
-        self.data_params = alg_data_static['parameters']
         self.data_vars = alg_data_dynamic
 
         # set algorithm information
@@ -255,7 +254,7 @@ class DriverModel:
         time_step_reference = self.time_reference
 
         # get data object(s)
-        data_registry, data_params = self.data_registry, self.data_params
+        data_registry = self.data_registry
         data_vars = self.data_vars
 
         # get path(s
@@ -269,11 +268,13 @@ class DriverModel:
         reset_model_metrics = self.reset_model_metrics
 
         # iterate over geo point(s)
-        obj_collections = {}
-        for fields_data in data_registry.to_dict(orient="records"):
+        for fields_registry in data_registry.to_dict(orient="records"):
+
+            # debug (jesi == 2 in this case
+            # fields_registry = data_registry.iloc[2].to_dict()
 
             # get point information
-            point_name, point_tag = fields_data['name'], fields_data['tag']
+            point_name, point_tag = fields_registry['name'], fields_registry['tag']
 
             # info point start
             log_stream.info(' -----> Point -- (1) Name: "' + point_tag + '" :: (2) Tag: "' + point_tag + '" ... ')
@@ -314,7 +315,7 @@ class DriverModel:
                     # organize model data
                     values_data, values_time = organize_model_data(dframe_data)
                     # organize model parameters
-                    values_params = organize_model_parameters(data_params)
+                    values_params = organize_model_parameters(fields_registry)
 
                     # apply sm model
                     (values_theta, values_ns, values_ns_ln_q, values_ns_rad_q,
@@ -327,7 +328,7 @@ class DriverModel:
                     # dump result object
                     self.dump_obj_datasets(
                         file_path_results_point, dframe_result, file_format=self.format_results,
-                        file_fields=self.fields_results, time_fields=self.time_results, registry_fields=fields_data)
+                        file_fields=self.fields_results, time_fields=self.time_results, registry_fields=fields_registry)
 
                     # dump metrics object
                     dframe_metrics = organize_model_metrics(
@@ -335,7 +336,7 @@ class DriverModel:
                             'ns': values_ns, 'ns_ln_q': values_ns_ln_q, 'ns_rad_q': values_ns_rad_q,
                             'kge': values_kge, 'rmse': values_rmse, 'rq': values_rq},
                         data_time={'time': time_step_reference},
-                        data_registry=fields_data,
+                        data_registry=fields_registry,
                         data_fields=self.fields_metrics)
 
                     # dump metrics object
@@ -362,7 +363,7 @@ class DriverModel:
         time_step_reference = self.time_reference
 
         # get data object(s)
-        data_registry, data_params = self.data_registry, self.data_params
+        data_registry = self.data_registry
         data_vars = self.data_vars
 
         # get path(s
@@ -374,11 +375,10 @@ class DriverModel:
         reset_model_figure = self.reset_model_figure
 
         # iterate over geo point(s)
-        obj_collections = {}
-        for fields_data in data_registry.to_dict(orient="records"):
+        for fields_registry in data_registry.to_dict(orient="records"):
 
             # get point information
-            point_name, point_tag = fields_data['name'], fields_data['tag']
+            point_name, point_tag = fields_registry['name'], fields_registry['tag']
 
             # info point start
             log_stream.info(' -----> Point -- (1) Name: "' + point_tag + '" :: (2) Tag: "' + point_tag + '" ... ')
@@ -403,13 +403,13 @@ class DriverModel:
                 dframe_results = self.get_obj_datasets(
                     file_path_results_point, file_format='csv',
                     time_fields=None,
-                    file_fields=None, registry_fields=data_registry)
+                    file_fields=None, registry_fields=fields_registry)
 
                 # get dataframe metrics
                 dframe_metrics = self.get_obj_datasets(
                     file_path_metrics_point, file_format='csv',
                     time_fields=None,
-                    file_fields=None, registry_fields=data_registry)
+                    file_fields=None, registry_fields=fields_registry)
 
                 # method to plot results and metrics
                 self.plot_obj_datasets(file_path_figure_point, dframe_results, dframe_metrics)
